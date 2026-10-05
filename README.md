@@ -78,6 +78,13 @@ sdk.dir=/path/to/android-sdk
 defaultMac=AA-BB-CC-DD-EE-FF      # pre-filled MAC in the UI; empty if absent
 ```
 
+> ⚠️ **Release builds must use an empty `defaultMac`.**
+> It is compiled into `classes.dex` via `BuildConfig.DEFAULT_MAC`, so a build made with a
+> real MAC hands the builder's network card address to everyone who downloads the APK.
+> This project did exactly that once — the v2.0.0–v2.1.1 packages were all pulled and
+> rebuilt. Keep the real value only in your own local `local.properties`; the repository
+> and every published package stays empty.
+
 `keystore.properties`
 ```properties
 storeFile=/path/to/your.jks

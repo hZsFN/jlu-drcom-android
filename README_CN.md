@@ -78,6 +78,11 @@ sdk.dir=/path/to/android-sdk
 defaultMac=AA-BB-CC-DD-EE-FF      # 界面上预填的 MAC，不填就是空
 ```
 
+> ⚠️ **发布包一律用空的 `defaultMac` 构建。**
+> 这个值会经 `BuildConfig.DEFAULT_MAC` 编进 `classes.dex`，用真实 MAC 打出来的包，
+> 等于把构建者那块网卡的地址一并发了出去 —— 本项目犯过一次，v2.0.0～v2.1.1 的包
+> 因此全部撤下重打。真值只写在本机自用版的 `local.properties` 里，仓库和发布包留空。
+
 `keystore.properties`
 ```properties
 storeFile=/path/to/your.jks
