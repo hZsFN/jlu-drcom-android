@@ -31,8 +31,8 @@ android {
         applicationId = "com.jlu.drcom"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.1.0-android"
+        versionCode = 3
+        versionName = "2.1.1-android"
 
         // arm64 给真机；x86_64 给雷电这类模拟器。
         // Chaquopy 是按 ABI 各带一份 Python 运行时的，少一个架构就少一份 .so。
