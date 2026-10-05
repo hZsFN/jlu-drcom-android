@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">吉大校园网</string>
+    <string name="notif_channel_name">认证服务</string>
+    <string name="notif_title">吉大校园网认证</string>
+</resources>

@@ -1,0 +1,12 @@
+.gradle/
+build/
+local.properties
+keystore.properties
+*.jks
+*.keystore
+_probe/
+*.apk
+__pycache__/
+*.pyc
+# 与外部模型往返的任务书，不发布
+inbox/
