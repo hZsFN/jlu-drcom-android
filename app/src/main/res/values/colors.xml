@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Python 标志那个白底 -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

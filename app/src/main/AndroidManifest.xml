@@ -11,9 +11,16 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!--
+        图标跟 Windows 版是同一个（CPython 自带的 DLLs/py.ico，PyInstaller 打包时
+        用的就是它），由 ~/.dsh/scripts/make-android-icons.py 生成五个密度 + 自适应版本。
+        roundIcon 给老设备用（Android 8 以下不会自己裁圆），8.0+ 走 mipmap-anydpi-v26。
+    -->
     <application
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
 
         <activity

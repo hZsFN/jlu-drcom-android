@@ -10,3 +10,6 @@ __pycache__/
 *.pyc
 # 与外部模型往返的任务书，不发布
 inbox/
+
+# 发布 release 时临时放的资产（APK / 校验值 / 正文），不入库
+_release/
