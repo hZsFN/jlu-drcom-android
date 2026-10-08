@@ -91,6 +91,13 @@ private fun DrComScreen(activity: ComponentActivity) {
             if (saved.mac.isNotBlank()) mac = saved.mac
         }
 
+        // 还是空的话，自己读本机的 Wi-Fi MAC。认证要的是「这台设备从哪块网卡出去」，
+        // 用本机自己的最不容易跟台式机打架（填成电脑的 MAC，两边同时在线会被交换机
+        // 当成 MAC 漂移）。Android 6 以后普通应用多半读不到，读不到就留空由用户手填。
+        if (mac.isBlank()) {
+            mac = LocalMac.read(activity)
+        }
+
         while (true) {
             status = DrComRuntime.status
             log = DrComRuntime.log
