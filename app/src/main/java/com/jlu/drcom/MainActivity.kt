@@ -81,6 +81,16 @@ private fun DrComScreen(activity: ComponentActivity) {
     var log by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
+        // 启动时把上次保存的账号 / 密码 / MAC 读回来。
+        // 密码本来就是加密落盘的（drcom.secrets_store），原先只是没人往回读，
+        // 于是每次开 App 都得重输一遍——用户感受到的就是「没法保存账号密码」。
+        if (account.isBlank() && password.isBlank()) {
+            val saved = PythonBridge.savedCredentials(activity)
+            if (saved.account.isNotBlank()) account = saved.account
+            if (saved.password.isNotBlank()) password = saved.password
+            if (saved.mac.isNotBlank()) mac = saved.mac
+        }
+
         while (true) {
             status = DrComRuntime.status
             log = DrComRuntime.log

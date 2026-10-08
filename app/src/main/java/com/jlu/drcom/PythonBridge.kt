@@ -82,7 +82,45 @@ object PythonBridge {
             ""
         }
     }
+
+    /** 让 Kotlin 侧往认证日志里写一行（排查用，比如网卡绑定的结果）。 */
+    fun note(context: Context, text: String): Boolean {
+        return try {
+            module(context).callAttr("note", text).toJava(Boolean::class.java) ?: false
+        } catch (t: Throwable) {
+            Log.e(TAG, "note failed", t)
+            false
+        }
+    }
+
+    /**
+     * 上次保存的凭据，用于界面启动时回填。
+     *
+     * 同样不整包要 Map —— 见 [status] 的注释。三个字段都是空串表示没存过。
+     */
+    fun savedCredentials(context: Context): SavedCredentials {
+        return try {
+            val py = module(context).callAttr("saved_credentials")
+            fun field(name: String): String =
+                py.callAttr("get", name)?.toJava(String::class.java).orEmpty()
+            SavedCredentials(
+                account = field("account"),
+                password = field("password"),
+                mac = field("mac"),
+            )
+        } catch (t: Throwable) {
+            Log.e(TAG, "saved_credentials failed", t)
+            SavedCredentials()
+        }
+    }
 }
+
+/** [PythonBridge.savedCredentials] 的返回值。 */
+data class SavedCredentials(
+    val account: String = "",
+    val password: String = "",
+    val mac: String = "",
+)
 
 /** Service 与 UI 共享的运行期状态（进程内单例）。 */
 object DrComRuntime {

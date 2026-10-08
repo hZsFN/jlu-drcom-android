@@ -59,6 +59,9 @@ class AuthForegroundService : Service() {
                     buildNotification("正在登录…"),
                     FGS_TYPE
                 )
+                // 必须在 Python 起来之前绑：未认证的校园网 Wi-Fi 会被系统判成「没有互联网」，
+                // 默认网络留在移动数据上，挑战包就从 5G 出去了（2026-10-08 真机上的症状）。
+                PythonBridge.note(this, NetworkBinder.bindToWifi(this))
                 val ok = PythonBridge.start(this, account, password, mac)
                 DrComRuntime.refresh(this)
                 push(buildNotification(if (ok) DrComRuntime.status else "启动失败"))

@@ -29,7 +29,9 @@ from drcom.stats import StatsStore
 __all__ = [
     "default_data_dir",
     "list_interfaces",
+    "note",
     "recent_log",
+    "saved_credentials",
     "start",
     "status",
     "stop",
@@ -167,7 +169,9 @@ def start(config: dict[str, Any] | None = None) -> bool:
     config = _to_plain_dict(config)
     try:
         with _LOCK:
-            if _ENGINE is not None and _ENGINE.is_running():
+            # is_running / is_online 是 @property，不能加括号 ——
+            # 加了就是 "'bool' object is not callable"，真机上（2026-10-08 手机截图）就是这么炸的。
+            if _ENGINE is not None and _ENGINE.is_running:
                 _note("已经在跑，忽略这次启动请求")
                 return True
 
@@ -255,6 +259,7 @@ def start(config: dict[str, Any] | None = None) -> bool:
             online_since=0.0,
         )
         _note(f"启动认证：{account.display_name}，MAC={account.mac}")
+        _note_interfaces()
         engine.start()  # 起工作线程后立刻返回
         return True
     except Exception:
@@ -280,6 +285,38 @@ def stop() -> bool:
     except Exception:
         _note("stop() 异常：" + traceback.format_exc())
         return False
+
+
+def note(text: str) -> bool:
+    """让 Kotlin 侧往认证日志里塞一行。
+
+    排查时最有用的一条：真机上「挑战码超时」多半是出口选错了，而 Kotlin 那边
+    知道进程被绑到了哪个网络，Python 这边看得见网卡列表——两边凑在同一个日志里，
+    一眼就能看出包该从哪儿出去。
+    """
+    try:
+        _note(str(text))
+        return True
+    except Exception:
+        return False
+
+
+def _note_interfaces() -> None:
+    """把本机网卡和地址写进日志。"""
+    try:
+        from drcom.netiface import _interface_addresses, get_default_route_ip, list_interfaces
+
+        route_ip = get_default_route_ip()
+        _note(f"内核默认出口地址：{route_ip or '(空)'}")
+        addrs = _interface_addresses()
+        for iface in list_interfaces():
+            if iface.if_type == 24:  # 回环没有参考价值
+                continue
+            where = "/".join(addrs.get(iface.name, ())) or "无IP"
+            state = "up" if iface.is_up else "down"
+            _note(f"  网卡 {iface.label} · {iface.kind} · {state} · {where}")
+    except Exception as exc:  # noqa: BLE001 - 诊断信息永远不该拦住认证
+        _note(f"枚举网卡失败：{exc}")
 
 
 def status() -> dict[str, Any]:
@@ -308,6 +345,45 @@ def recent_log(n: int = 60) -> str:
         count = 60
     with _LOCK:
         return "\n".join(_LOG[-count:])
+
+
+def saved_credentials() -> dict[str, Any]:
+    """读回上次保存的账号 / 密码 / MAC，供界面启动时回填。
+
+    密码本来是加密落盘的（``drcom.secrets_store``：本机密钥文件 + 流加密，
+    ``config.json`` 里只有密文），但界面一直把输入框当一次性内存用，
+    重开 App 就是一片空白——用户看到的现象是「没法保存账号密码」。
+    存是存了，缺的只是这条读回来的路（2026-10-08 主人反馈）。
+
+    返回的三个值都可能是空串：没存过、解密失败、或者 MAC 是没填过的占位符。
+    读配置本身出问题也一律返回空串，绝不因为读凭据失败而拦住界面。
+    """
+    empty = {"account": "", "password": "", "mac": ""}
+    try:
+        store = ConfigStore(default_data_dir())
+        store.ensure_dirs()
+        cfg = store.load()
+
+        account = None
+        for item in cfg.accounts:
+            if item.id == cfg.active_account_id:
+                account = item
+                break
+        if account is None and cfg.accounts:
+            account = cfg.accounts[0]
+        if account is None:
+            return empty
+
+        return {
+            "account": account.account,
+            "password": store.get_password(account.id),
+            # 存进去时可能是占位符或空，归一化后不是合法 MAC 就当没填过，
+            # 让界面继续用 BuildConfig.DEFAULT_MAC 预填。
+            "mac": _normalize_mac(account.mac),
+        }
+    except Exception as exc:  # noqa: BLE001 - 读凭据失败不该拦住界面
+        _note(f"读取已保存的账号失败：{exc}")
+        return empty
 
 
 def list_interfaces() -> list[dict[str, Any]]:

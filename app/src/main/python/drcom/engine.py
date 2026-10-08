@@ -267,13 +267,20 @@ class AuthEngine:
                 server=self.config.auth.server, port=self.config.auth.port
             )
             addresses = _interface_addresses()
+
+            def _addrs_of(iface) -> tuple[str, ...]:
+                # _interface_addresses() 的 key 按平台不同：Android 版拿接口名（str）作 key，
+                # Windows 版拿索引（int）。只试一种的话另一端永远取空 —— 于是「接口回退」
+                # 静悄悄地从来没生效过（2026-10-08 排查真机超时时发现）。
+                return addresses.get(iface.name, ()) or addresses.get(iface.index, ())
+
             ordered: list[str] = []
             if preferred is not None:
-                ordered.extend(addresses.get(preferred.index, ()))
+                ordered.extend(_addrs_of(preferred))
             for iface in list_interfaces():
                 if iface.if_type == 24:  # loopback
                     continue
-                ordered.extend(addresses.get(iface.index, ()))
+                ordered.extend(_addrs_of(iface))
             for address in ordered:
                 if address in candidates or address.startswith(("127.", "169.254.")):
                     continue
