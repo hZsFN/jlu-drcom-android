@@ -10,11 +10,11 @@ The desktop edition is [JLU DrCOM NG](https://github.com/hZsFN/jlu-drcom-ng) (Py
 
 ## Why this exists
 
-Campus authentication binds to a **network card**, not to an account. So the same dorm room, the same student ID: you authenticate fine on your laptop, then pick up your phone, join the Wi-Fi, and nothing works — because the server recognises the MAC of your laptop's **wired** NIC, and has never heard of the one your phone presents.
+Campus authentication tracks your online state by **MAC**: whichever MAC the client reports in its authentication packets is the one the server lets through. So the phone can simply use **its own Wi-Fi NIC's** MAC — no impersonation required. That contradicts what this repository's earlier docs claimed; it was verified on a real device in October 2026.
 
-Hence the trade-off this app makes: put your **laptop's NIC MAC** into the phone, and let the phone "impersonate" the laptop for authentication.
+The app reads the local Wi-Fi MAC itself (`LocalMac`, trying `NetworkInterface` → `WifiInfo` → `sysfs` in turn) and only displays it — you never fill it in.
 
-State the cost plainly: **one MAC can be online in exactly one place**. If your laptop is connected and you log in from the phone, the switch sees that MAC flapping between two ports and may kick both. The correct usage is **the phone stands in while the laptop is offline**.
+> One real-device gotcha worth recording: an unauthenticated campus Wi-Fi is seen by Android as "connected but no internet", so the system keeps the **default network** on mobile data and the authentication packets leave over 5G. Before starting authentication the app calls `ConnectivityManager.bindProcessToNetwork()` to bind its process to Wi-Fi, so the traffic goes out the right NIC.
 
 ---
 
@@ -36,12 +36,9 @@ Feature parity with the desktop edition; the UI is just a single phone-friendly 
 
 1. Install the APK (release builds are in [Releases](https://github.com/hZsFN/jlu-drcom-android/releases))
 2. On first launch, accept the **battery-optimisation whitelist** — otherwise most Chinese OEM ROMs kill the background service within minutes
-3. Fill in three fields:
-   - **Account**: your student ID
-   - **Password**
-   - **NIC MAC**: the MAC of your laptop's **wired** adapter (`getmac /v` on Windows, or the adapter properties)
+3. Fill in **Account** (your student ID) and **Password** — that is all. The MAC is read by the app itself and shown read-only
 4. Tap "登录 / Log in"; the status line reports which step it reached
-5. When you need the laptop online, tap "退出 / Log out" on the phone first
+5. When you want the laptop online instead, tap "退出 / Log out" on the phone first
 
 ---
 
@@ -75,15 +72,12 @@ Two optional local files, neither tracked by git (already in `.gitignore`):
 `local.properties`
 ```properties
 sdk.dir=/path/to/android-sdk
-defaultMac=AA-BB-CC-DD-EE-FF      # pre-filled MAC in the UI; empty if absent
 ```
 
-> ⚠️ **Release builds must use an empty `defaultMac`.**
-> It is compiled into `classes.dex` via `BuildConfig.DEFAULT_MAC`, so a build made with a
-> real MAC hands the builder's network card address to everyone who downloads the APK.
-> This project did exactly that once — the v2.0.0–v2.1.1 packages were all pulled and
-> rebuilt. Keep the real value only in your own local `local.properties`; the repository
-> and every published package stays empty.
+> This file used to carry a `defaultMac`, which pre-filled the PC NIC's MAC into the UI.
+> Since 2.1.3 the app reads the local MAC by itself and the field is gone — which also
+> removes the old hazard of "the builder's NIC address compiled into `classes.dex`"
+> (that is exactly what forced the v2.0.0–v2.1.1 packages to be pulled and rebuilt).
 
 `keystore.properties`
 ```properties
@@ -117,7 +111,7 @@ The UI and host are Kotlin: a single Compose page, `AuthForegroundService` (a `s
 
 ## Known limitations
 
-- **One MAC, one place online** (see above). That is the authentication scheme, not a bug
+- **Switching devices means re-authenticating**: the session is tracked by MAC, so one account is one device at a time on the campus network
 - **`minSdk 26`** (Android 8.0). Older versions are untested
 - **The foreground service uses the `specialUse` type.** From Android 14 on, a `dataSync` foreground service is stopped by the system once it accumulates roughly 6 hours in 24 — and authentication has to run all day, so `dataSync` is not an option
 - **Only `arm64-v8a` and `x86_64`** are packaged. Chaquopy ships a separate CPython runtime per ABI, and each one is a ~6 MB `.so`

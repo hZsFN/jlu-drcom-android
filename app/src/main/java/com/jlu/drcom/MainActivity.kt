@@ -34,17 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 
-/**
- * 默认要用的 MAC：电脑有线网卡那一块。
- *
- * 校园网认证不是"这个账号的密码对了就放行"，而是"这块网卡 + 这个账号"的绑定关系。
- * 服务器只认当初登记的那块有线网卡，手机自己的 Wi-Fi MAC 递上去必然被拒。
- *
- * 这个值**不入版本库**：构建时从 `local.properties` 的 `defaultMac` 读进来
- * （见 `app/build.gradle.kts`）。clone 下来的人拿到的是空串，在界面上填自己那块网卡即可。
- */
-private val DEFAULT_MAC: String = BuildConfig.DEFAULT_MAC
-
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +65,7 @@ private fun DrComScreen(activity: ComponentActivity) {
     var account by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
-    var mac by remember { mutableStateOf(DEFAULT_MAC) }
+    var mac by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("未运行") }
     var log by remember { mutableStateOf("") }
 
@@ -91,9 +80,8 @@ private fun DrComScreen(activity: ComponentActivity) {
             if (saved.mac.isNotBlank()) mac = saved.mac
         }
 
-        // 还是空的话，自己读本机的 Wi-Fi MAC。认证要的是「这台设备从哪块网卡出去」，
-        // 用本机自己的最不容易跟台式机打架（填成电脑的 MAC，两边同时在线会被交换机
-        // 当成 MAC 漂移）。Android 6 以后普通应用多半读不到，读不到就留空由用户手填。
+        // MAC 交给程序自己读：认证报文里用本机 Wi-Fi 网卡那块最稳妥，也不该让用户操心。
+        // 读不到就留空，日志里会体现出来。
         if (mac.isBlank()) {
             mac = LocalMac.read(activity)
         }
@@ -136,12 +124,9 @@ private fun DrComScreen(activity: ComponentActivity) {
             },
             modifier = Modifier.fillMaxWidth()
         )
-        OutlinedTextField(
-            value = mac,
-            onValueChange = { mac = it },
-            label = { Text("网卡 MAC（认证只认这块）") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "网卡 MAC：" + mac.ifBlank { "（未能自动读取）" },
+            style = MaterialTheme.typography.bodySmall
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

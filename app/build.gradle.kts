@@ -14,15 +14,6 @@ val keystoreProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
-// 界面里预填的 MAC 也来自本机文件（local.properties 同样不进版本库）：
-// 认证绑的是"这块网卡"，而 MAC 属于设备隐私，不该出现在公开仓库里。
-// 没配的人拿到空串，界面上手填即可。
-val localProps = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
-val defaultMac = localProps.getProperty("defaultMac") ?: ""
-
 android {
     namespace = "com.jlu.drcom"
     compileSdk = 34
@@ -31,16 +22,14 @@ android {
         applicationId = "com.jlu.drcom"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.1.2-android"
+        versionCode = 5
+        versionName = "2.1.3-android"
 
         // arm64 给真机；x86_64 给雷电这类模拟器。
         // Chaquopy 是按 ABI 各带一份 Python 运行时的，少一个架构就少一份 .so。
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
-
-        buildConfigField("String", "DEFAULT_MAC", "\"$defaultMac\"")
     }
 
     signingConfigs {
