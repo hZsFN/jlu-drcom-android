@@ -1,3 +1,5 @@
+[![](https://img.shields.io/badge/powered_by-dafeiyu-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/Dafeiyu111)
+
 # JLU DrCOM Android
 
 吉林大学校园网认证客户端的 **Android 版**。
@@ -159,5 +161,3 @@ adb shell run-as com.jlu.drcom cat files/.config/jlu-drcom-ng/logs/drcom-*.log
 ## 许可
 
 与原项目一致，见 [LICENSE](LICENSE)。
-
-[![](https://img.shields.io/badge/powered_by-dafeiyu-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/Dafeiyu111)

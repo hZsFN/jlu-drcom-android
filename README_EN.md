@@ -1,3 +1,5 @@
+[![](https://img.shields.io/badge/powered_by-dafeiyu-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/Dafeiyu111)
+
 # JLU DrCOM Android
 
 The **Android port** of a Jilin University campus-network (Dr.COM) authentication client.
@@ -146,5 +148,3 @@ adb shell run-as com.jlu.drcom cat files/.config/jlu-drcom-ng/logs/drcom-*.log
 ## License
 
 Same as the original project — see [LICENSE](LICENSE).
-
-[![](https://img.shields.io/badge/powered_by-dafeiyu-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/Dafeiyu111)
